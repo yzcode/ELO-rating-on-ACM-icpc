@@ -3,9 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+#db / apple file
+*.db
+.DS_Store
+
 # C extensions
 *.so
-
 # Distribution / packaging
 .Python
 env/
