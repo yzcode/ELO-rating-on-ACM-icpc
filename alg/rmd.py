@@ -1,7 +1,23 @@
 # -*- coding: utf-8 -*-
 import time
 import numpy as np
+import MySQLdb
 PROBLEM_MAP = {}
+MYSQLCUR = {}
+
+
+class status():
+    """docstring for status"""
+    def __init__(self, item):
+        self.run_id = item[0]
+        self.username = item[1]
+        self.problem_id = item[2]
+        self.result = item[3]
+        self.memory = item[4]
+        self.time = item[5]
+        self.language = item[6]
+        self.code_len = item[7]
+        self.time = item[8]
 
 
 class problem():
@@ -9,6 +25,60 @@ class problem():
     def __init__(self):
         self.vec = []
         self.rating = 0
+
+
+def cal_elo(ra, rb, res):
+    EA = 1 / (1 + 10 ** ((rb - ra) / 400.0))
+    EB = 1 / (1 + 10 ** ((ra - rb) / 400.0))
+    KA = KB = SA = SB = 0
+    if ra > 2400:
+        KA = 10
+    elif ra > 1800:
+        KA = 20
+    else:
+        KA = 40
+    if rb > 2400 or rb < 600:
+        KB = 10
+    elif rb > 1900 or rb < 1100:
+        KB = 15
+    else:
+        KB = 30
+    if res:
+        SA = 1
+        SB = 0
+        factor = 1
+    else:
+        SA = 0
+        SB = 1
+        factor = 0.20
+    RA = ra + KA * (SA - EA) * factor
+    RB = rb + KB * (SB - EB)
+    return RA, RB
+
+
+def get_elo(username):
+    sql = "select * from poj_data where User = '%s'\
+        and Result != 'Compile Error'"
+    MYSQLCUR.execute(sql % username)
+    rating = 1500.0
+    black_hole = 1500
+    ac_arr = []
+    for item in MYSQLCUR.fetchall():
+        sta = status(item)
+        if sta.result == 'Accepted' and sta.problem_id not in ac_arr:
+            ac_arr.append(sta.problem_id)
+            rating, black_hole = cal_elo(
+                rating,
+                PROBLEM_MAP[sta.problem_id].rating,
+                True
+            )
+        elif sta.result != 'Accepted' and sta.problem_id not in ac_arr:
+            rating, black_hole = cal_elo(
+                rating,
+                PROBLEM_MAP[sta.problem_id].rating,
+                False
+            )
+    return rating, ac_arr
 
 
 def logging(msg, lv):
@@ -43,17 +113,54 @@ def rmd_by_problem(problem_id):
     return ans
 
 
+def rmd_by_user(username):
+    ac_sql = "select * from poj_data where User = '%s' \
+        order by RunId desc limit 10"
+    MYSQLCUR.execute(ac_sql % username)
+    problem_set = set()
+    for item in MYSQLCUR.fetchall():
+        sta = status(item)
+        problem_set.add(sta.problem_id)
+    ans_set = set()
+    for item in problem_set:
+        rmd_res = rmd_by_problem(item)
+        for items in rmd_res:
+            ans_set.add(items)
+    # print ans_set
+    ans = []
+    user_elo, ac_arr = get_elo(username)
+    for item in ans_set:
+        if item[0] not in ac_arr:
+            rl_err = 1 - abs(user_elo - PROBLEM_MAP[item[0]].rating) / user_elo
+            ans.append((item[0], item[1] * rl_err))
+    ans = sorted(
+        ans,
+        cmp=lambda x, y: cmp(y[1], x[1])
+    )
+    return ans
+
+
 def rmd_fun():
     while True:
-        print "Please Input a problem ID:"
-        problem_id = int(input())
-        # problem_id = 1000
-        if problem_id == 0:
+        print "(1)Recommandation By Problem id"
+        print "(2)Recommandation By Username"
+        print "(3)Quit"
+        option = int(input())
+        if option == 1:
+            print "Please Input A Porblem Id:"
+            problem_id = int(input())
+            ans = rmd_by_problem(problem_id)
+            for i in range(0, min(len(ans), 10)):
+                print ans[i][0], ans[i][1], PROBLEM_MAP[ans[i][0]].rating
+        elif option == 2:
+            username = raw_input("Please Input A Username:")
+            ans = rmd_by_user(username)
+            for i in range(0, min(len(ans), 10)):
+                print ans[i][0], ans[i][1], PROBLEM_MAP[ans[i][0]].rating
+        elif option == 3:
             break
-        ans = rmd_by_problem(problem_id)
-        for i in range(0, min(len(ans), 10)):
-            print ans[i][0], ans[i][1], PROBLEM_MAP[ans[i][0]].rating
-
+        else:
+            continue
 
 if __name__ == '__main__':
     logging("Recommandation System Start", 0)
@@ -80,6 +187,16 @@ if __name__ == '__main__':
             PROBLEM_MAP[raw_label] = problem()
         PROBLEM_MAP[raw_label].rating = raw_rating
     logging("Reading Rating File Finish", 0)
+    logging("Connect to The MySQL Server...", 0)
+    mysqlconn = MySQLdb.connect(
+        host="localhost",
+        user="root",
+        passwd="199528",
+        db="OJ_data",
+        charset="utf8"
+    )
+    MYSQLCUR = mysqlconn.cursor()
+    logging("Connected to The MySQL Server", 0)
     logging("Recommandation System Initial Succeeded!", 0)
     rmd_fun()
     logging("Recommandation System Quit!", 0)
