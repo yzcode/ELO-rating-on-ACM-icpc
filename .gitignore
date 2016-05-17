@@ -6,6 +6,7 @@ __pycache__/
 #db / apple file
 *.db
 .DS_Store
+*.txt
 
 # C extensions
 *.so
