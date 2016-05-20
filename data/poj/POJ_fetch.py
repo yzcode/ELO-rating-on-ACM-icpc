@@ -52,6 +52,7 @@ class POJ_fetcher(object):
             success = True
             print "Fetch RunID %9d" % start_at 
             try:
+                time.sleep(1)
                 resp = self.s.get(url,timeout=5)
             except Exception, e:
                 print e

@@ -21,7 +21,7 @@ if __name__ == '__main__':
     mysqlcur = mysqlconn.cursor()
     # sum = 5000
     step = 50000
-    for i in range(0 / step, sum / step + 10):
+    for i in range(15239716 / step, sum / step + 10):
         startptr = i * step
         print startptr
         sqlitecur.execute(selsql % (startptr, step))
