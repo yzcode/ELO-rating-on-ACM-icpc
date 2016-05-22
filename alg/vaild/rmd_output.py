@@ -141,15 +141,58 @@ def rmd_by_user(username):
 
 
 def run_test():
-    test_file = open("./test_file.in")
-    out_file = open("./test.out")
+    logging("Test start!", 0)
+    test_file = open("./testfile.in", "r")
+    out_file = open("./test.out", "w")
+    cache_file = open("./output.txt", "r")
+    rel_cache = {}
+    for i in range(1000, 4055):
+        pinfo = cache_file.readline().replace('\n', '').split(" ")
+        related_problem = cache_file.readline().replace('\n', '').split(" ")
+        pid = int(pinfo[0])
+        rel_cache[pid] = map(int, filter(lambda x: len(x) > 0, related_problem))
     count = int(test_file.readline())
-    for i in range(0, 1):
+    for i in range(0, count):
+        if i % 50 == 0:
+            logging('Now handling the NO.%d user\r' % i, 0)
         user_info = test_file.readline().split(" ")
         username = user_info[0]
         status_count = int(user_info[1])
         user_status = map(int, test_file.readline().split(" ")[:status_count])
-        print username, user_status
+        ans_set = set()
+        ans = []
+        for sta in user_status[-10:]:
+            rmd_res = rel_cache[sta]
+            for rmd in rmd_res:
+                ans_set.add((rmd, cal_cosin(
+                    PROBLEM_MAP[rmd].vec,
+                    PROBLEM_MAP[sta].vec
+                )))
+        # print ans_set
+        for item in ans_set:
+            ans.append((item[0], item[1]))
+        ans = sorted(
+            ans,
+            cmp=lambda x, y: cmp(y[1], x[1])
+        )
+        out_ans = set()
+        for item in ans:
+            out_ans.add(item[0])
+            if len(out_ans) == 10:
+                break
+        out_ans = [i for i in out_ans]
+        out_len = min(10, len(out_ans))
+        out_file.write("%s %d\n" % (username, out_len))
+        for i in range(0, out_len):
+            out_file.write(str(out_ans[i]))
+            if i != out_len - 1:
+                out_file.write(" ")
+            else:
+                out_file.write("\n")
+    out_file.flush()
+    test_file.close()
+    out_file.close()
+    logging("Test end!", 0)
     pass
 
 

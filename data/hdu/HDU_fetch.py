@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Author: Comzyh
-# @Date:   2014-06-09 17:47:09
-# @Last Modified by:   Comzyh
-# @Last Modified time: 2016-03-30 13:41:48
 import sqlite3
 import requests
 import re
