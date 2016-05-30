@@ -15,7 +15,7 @@ def logging(msg, lv):
     print lvstr[lv], logtime, ":", msg
 
 
-def generate(count, delta):
+def generate(count, delta, raw):
     logging("Start generating the test file!", 0)
     logging("Fetching Username in the Database!", 0)
     sql_cur = mysql_con.cursor()
@@ -50,13 +50,15 @@ def generate(count, delta):
     logging("Fetching records in the Database finished!", 0)
     logging("There will be %d users in the test file" % len(test_data), 0)
     logging("Start writing to the file", 0)
-    test_file = open("./testfile.in", "w")
-    std_file = open("./testfile.out", "w")
-    test_file.write("%d\n" % len(test_data))
-    std_file.write("%d\n" % len(test_data))
+    test_file = open("./testfile.in" if raw else "./Rtestfile.in", "w")
+    std_file = open("./testfile.out" if raw else "./Rtestfile.out", "w")
+    if raw:
+        test_file.write("%d\n" % len(test_data))
+        std_file.write("%d\n" % len(test_data))
     for test_record in test_data:
-        test_file.write("%s %d\n" % (test_record["user"], len(test_record["status"][:-delta])))
-        std_file.write("%s %d\n" % (test_record["user"], len(test_record["status"][-delta:])))
+        if raw:
+            test_file.write("%s %d\n" % (test_record["user"], len(test_record["status"][:-delta])))
+            std_file.write("%s %d\n" % (test_record["user"], len(test_record["status"][-delta:])))
         for status in test_record["status"][:-delta]:
             test_file.write("%d " % status)
         test_file.write("\n")
@@ -84,8 +86,8 @@ def vaild(fname):
         std_info = std_file.readline().split(" ")
         std_cnt = int(std_info[1])
         amt_std += std_cnt
-        out_sta = map(int, filter(lambda x: len(x) > 0, out_file.readline().split(" ")))
-        std_sta = map(int, filter(lambda x: len(x) > 0, std_file.readline().split(" ")))
+        out_sta = map(int, filter(lambda x: len(x) > 1, out_file.readline().split(" ")))
+        std_sta = map(int, filter(lambda x: len(x) > 1, std_file.readline().split(" ")))
         for sta in out_sta:
             if sta in std_sta:
                 hit += 1
@@ -100,16 +102,21 @@ def main():
     while True:
         print "(1)Generate Test File"
         print "(2)Vaild F1"
-        print "(3)Quit"
+        print "(3)Generate Raw File"
+        print "(4)Quit"
         option = int(input())
         if option == 1:
             count = input("please input the number of user in the test file: ")
             delta = input("please input the delta of vaild in the test file: ")
-            generate(count, delta)
+            generate(count, delta, True)
         elif option == 2:
             file_name = raw_input("please input the output file: ")
             vaild(file_name)
         elif option == 3:
+            count = input("please input the number of user in the test file: ")
+            delta = input("please input the delta of vaild in the test file: ")
+            generate(count, delta, False)
+        elif option == 4:
             break
         else:
             continue

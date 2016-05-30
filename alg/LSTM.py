@@ -7,7 +7,6 @@ import tensorflow as tf
 # The value returned by the constructor represents the output
 # of the Constant op.
 matrix1 = tf.constant([[3., 3.]])
-
 # Create another Constant that produces a 2x1 matrix.
 matrix2 = tf.constant([[2.], [2.]])
 
@@ -15,3 +14,7 @@ matrix2 = tf.constant([[2.], [2.]])
 # The returned value, 'product', represents the result of the matrix
 # multiplication.
 product = tf.matmul(matrix1, matrix2)
+with tf.Session() as sess:
+    result = sess.run([product])
+    print(result)
+lstm = tf.nn.rnn_cell.BasicLSTMCell(10)

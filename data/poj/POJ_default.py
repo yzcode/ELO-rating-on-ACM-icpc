@@ -22,7 +22,7 @@ if __name__ == '__main__':
         charset="utf8"
     )
     sql = "select * from  where "
-    sql = "UPDATE fishteam_problems SET extra_data = '%s' WHERE repo = 'Pku' and label = %d"
+    sql = "UPDATE fishteam_problems SET extra_data = '%s', rating = %d WHERE repo = 'Pku' and label = %d"
     problem_file = open("output.txt", "r")
     for i in range(1000, 4055):
         pinfo = problem_file.readline().replace('\n', '').split(" ")
@@ -35,7 +35,7 @@ if __name__ == '__main__':
         }
         # print json.dumps(extra_data)
         mysqlcur = mysqlconn_Local.cursor()
-        mysqlcur.execute(sql % (json.dumps(extra_data), pid))
+        mysqlcur.execute(sql % (json.dumps(extra_data), prating, pid))
     mysqlconn_Local.commit()
     mysqlconn_Local.close()
     logging("transform finished!", 0)

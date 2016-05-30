@@ -137,7 +137,7 @@ def rmd_by_user(username):
         ans,
         cmp=lambda x, y: cmp(y[1], x[1])
     )
-    return ans
+    return ans, user_elo
 
 
 def rmd_fun():
@@ -154,7 +154,8 @@ def rmd_fun():
                 print ans[i][0], ans[i][1], PROBLEM_MAP[ans[i][0]].rating
         elif option == 2:
             username = raw_input("Please Input A Username:")
-            ans = rmd_by_user(username)
+            ans, urating = rmd_by_user(username)
+            print username, urating
             for i in range(0, min(len(ans), 10)):
                 print ans[i][0], ans[i][1], PROBLEM_MAP[ans[i][0]].rating
         elif option == 3:

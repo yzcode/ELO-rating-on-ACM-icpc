@@ -177,7 +177,8 @@ def run_test():
         )
         out_ans = set()
         for item in ans:
-            out_ans.add(item[0])
+            if item[0] not in user_status:
+                out_ans.add(item[0])
             if len(out_ans) == 10:
                 break
         out_ans = [i for i in out_ans]
@@ -189,6 +190,8 @@ def run_test():
                 out_file.write(" ")
             else:
                 out_file.write("\n")
+        if out_len == 0:
+            out_file.write("\n")
     out_file.flush()
     test_file.close()
     out_file.close()
