@@ -2,7 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+*.idea
+*.in
+*.out
 #db / apple file
 *.db
 .DS_Store

@@ -49,9 +49,8 @@ class HDU_fetcher(object):
 
     def fetch_html(self, start_at=16668947):
         # http://acm.hdu.edu.cn/status.php?first=16668947&user=&pid=&lang=&status=#status
-        import time
         time.sleep(0.1)
-	url = "http://acm.hdu.edu.cn/status.php?first=" + \
+        url = "http://acm.hdu.edu.cn/status.php?first=" + \
             str(start_at) + "&user=&pid=&lang=&status=#status"
         while True:
             success = True

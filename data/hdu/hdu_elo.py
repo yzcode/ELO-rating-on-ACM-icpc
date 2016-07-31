@@ -25,10 +25,12 @@ class status():
         self.time = item[8]
 
 
+REPO = 'hdu'
+CE_STR = 'Compilation Error'
 DATA_LEN = 0
 MAX_RED = 0
 MIN_RED = 100000
-PROBLEM_RATING = [1500 for i in range(0, 6000)]
+PROBLEM_RATING = [1500 for i in range(0, 10000)]
 USR = {}
 
 
@@ -41,7 +43,7 @@ def logging(msg, lv):
 
 
 def fetch_data(mysqlcur, start, limit):
-    sql = "select * from poj_data limit %d,%d" % (start, limit)
+    sql = "select * from %s_data limit %d,%d" % (REPO, start, limit)
     logging("Fetching Data from %d to %d Start..." % (start, start + limit), 0)
     mysqlcur.execute(sql)
     logging("Fetching Data from %d to %d Finish" % (start, start + limit), 0)
@@ -57,7 +59,7 @@ def status_filter(data):
     data_arr = []
     for item in data:
         sta = status(item)
-        if sta.result != "Compile Error":
+        if sta.result != CE_STR:
             if not USR.get(sta.username):
                 USR[sta.username] = user()
                 data_arr.append(sta)
@@ -69,7 +71,7 @@ def status_filter(data):
     return data_arr
 
 
-def cal_elo(ra, rb, res):
+def cal_elo(ra, rb, res, lowflag):
     EA = 1 / (1 + 10 ** ((rb - ra) / 400.0))
     EB = 1 / (1 + 10 ** ((ra - rb) / 400.0))
     KA = KB = SA = SB = 0
@@ -79,9 +81,9 @@ def cal_elo(ra, rb, res):
         KA = 15
     else:
         KA = 30
-    if rb > 2400 or rb < 600:
+    if rb > 1900 or rb < 1100:
         KB = 10
-    elif rb > 1900 or rb < 1100:
+    elif rb > 1700 or rb < 1300:
         KB = 15
     else:
         KB = 30
@@ -94,7 +96,7 @@ def cal_elo(ra, rb, res):
         SB = 1
         factor = 0.35
     RA = ra + KA * (SA - EA) * factor
-    RB = rb + KB * (SB - EB)
+    RB = rb + KB * (SB - EB) * (factor if lowflag else 1)
     return RA, RB
 
 
@@ -108,19 +110,25 @@ def elo_pro(mysqlcur):
         datas = status_filter(datas)
         logging("Computing the Problem Rating...", 0)
         for sta in datas:
-            USR[sta.username].rating, PROBLEM_RATING[sta.problem_id] =\
-                cal_elo(
-                    USR[sta.username].rating,
-                    PROBLEM_RATING[sta.problem_id],
-                    True if sta.result == "Accepted" else False
-                )
+            if sta.problem_id < 10000:
+                global MIN_RED, MAX_RED
+                MIN_RED = min(MIN_RED, sta.problem_id)
+                MAX_RED = max(MAX_RED, sta.problem_id)
+                USR[sta.username].rating, PROBLEM_RATING[sta.problem_id] =\
+                    cal_elo(
+                        USR[sta.username].rating,
+                        PROBLEM_RATING[sta.problem_id],
+                        True if sta.result == "Accepted" else False,
+                        sta.problem_id <= 2400
+                    )
         logging("Computing the Problem Rating Finish", 0)
     # print PROBLEM_RATING
     pass
 
 
 def print_to_file():
-    fp = open("result_poj.txt", "w")
+    fp = open("result_%s.txt" % REPO, "w")
+    fp.write("%d\n" % (MAX_RED + 1 - MIN_RED))
     for i in range(MIN_RED, MAX_RED + 1):
         fp.write("%d\t%f\n" % (i, PROBLEM_RATING[i]))
     fp.close()
@@ -140,7 +148,7 @@ if __name__ == '__main__':
     logging("MySQL Server Connected", 0)
     mysqlcur = mysqlconn.cursor()
     logging("Getting the Amount of Data...", 0)
-    mysqlcur.execute("select count(RunID) from poj_data")
+    mysqlcur.execute("select count(RunID) from %s_data" % REPO)
     DATA_LEN = mysqlcur.fetchall()[0][0]
     logging("There are %d records in the DataBase" % DATA_LEN, 0)
     # print len(fetch_data(mysqlcur, 0, 100))
